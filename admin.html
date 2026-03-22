@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — Sandeep Kumar</title>
+  <!-- NO INDEX — Admin page should not appear on Google -->
+  <meta name="robots" content="noindex, nofollow"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --navy:#080d1a; --deep:#0c1322; --card:#101828;
+      --gold:#c8a84b; --gold2:#e6cf88; --cream:#f0ebe0;
+      --muted:#7a8099; --green:#22c55e; --red:#ef4444;
+      --white:#ffffff;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Outfit',sans-serif;background:var(--navy);color:var(--cream);min-height:100vh;}
+
+    /* ── LOGIN SCREEN ── */
+    #login-screen{
+      position:fixed;inset:0;z-index:1000;
+      background:var(--navy);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .login-box{
+      width:100%;max-width:420px;
+      background:var(--deep);
+      border:1px solid rgba(200,168,75,.18);
+      border-radius:16px;padding:3rem 2.5rem;
+      text-align:center;
+    }
+    .login-logo{
+      font-family:'Cormorant Garamond',serif;
+      font-size:2rem;font-weight:700;color:var(--gold);
+      margin-bottom:.4rem;
+    }
+    .login-sub{font-size:.82rem;color:var(--muted);margin-bottom:2.5rem;}
+    .login-avatar{
+      width:72px;height:72px;border-radius:50%;
+      background:linear-gradient(145deg,#1c2d4a,#0c1322);
+      border:2px solid rgba(200,168,75,.3);
+      display:flex;align-items:center;justify-content:center;
+      font-size:2.2rem;margin:0 auto 2rem;
+    }
+    .fg{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem;text-align:left;}
+    .fg label{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+    .fg input{
+      background:var(--card);border:1px solid rgba(240,235,224,.08);
+      border-radius:8px;padding:.9rem 1.1rem;
+      color:var(--cream);font-family:'Outfit',sans-serif;font-size:.95rem;
+      outline:none;transition:border-color .25s;
+    }
+    .fg input:focus{border-color:rgba(200,168,75,.45);}
+    .login-btn{
+      width:100%;padding:1rem;margin-top:.5rem;
+      background:var(--gold);color:var(--navy);
+      font-weight:700;font-size:.9rem;letter-spacing:.08em;
+      text-transform:uppercase;border:none;border-radius:8px;
+      cursor:pointer;transition:background .25s,transform .2s;
+    }
+    .login-btn:hover{background:var(--gold2);transform:translateY(-2px);}
+    .login-error{
+      display:none;margin-top:1rem;
+      background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+      color:var(--red);padding:.75rem;border-radius:8px;font-size:.84rem;
+    }
+    .login-hint{margin-top:1.5rem;font-size:.75rem;color:var(--muted);}
+    .login-hint span{color:var(--gold);}
+
+    /* ── ADMIN PANEL ── */
+    #admin-panel{display:none;}
+
+    /* Sidebar */
+    .layout{display:flex;min-height:100vh;}
+    .sidebar{
+      width:240px;flex-shrink:0;
+      background:var(--deep);
+      border-right:1px solid rgba(200,168,75,.1);
+      padding:2rem 1.5rem;
+      display:flex;flex-direction:column;gap:1.5rem;
+      position:fixed;top:0;left:0;bottom:0;overflow-y:auto;
+    }
+    .sidebar-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--gold);padding-bottom:1.5rem;border-bottom:1px solid rgba(200,168,75,.1);}
+    .sidebar-logo small{display:block;font-family:'Outfit',sans-serif;font-size:.72rem;color:var(--muted);margin-top:.2rem;}
+    .nav-item{
+      display:flex;align-items:center;gap:.8rem;
+      padding:.75rem 1rem;border-radius:8px;
+      font-size:.88rem;font-weight:500;color:var(--muted);
+      cursor:pointer;transition:background .2s,color .2s;border:none;background:transparent;width:100%;text-align:left;
+    }
+    .nav-item:hover,.nav-item.active{background:rgba(200,168,75,.08);color:var(--cream);}
+    .nav-item .ni{font-size:1.1rem;}
+    .nav-item .badge-count{
+      margin-left:auto;background:var(--gold);color:var(--navy);
+      font-size:.65rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;
+    }
+    .sidebar-logout{margin-top:auto;padding-top:1.5rem;border-top:1px solid rgba(200,168,75,.1);}
+
+    /* Main content */
+    .main{margin-left:240px;padding:2.5rem;flex:1;}
+
+    /* Header */
+    .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;}
+    .page-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:var(--white);}
+    .page-time{font-size:.78rem;color:var(--muted);}
+
+    /* Stat cards */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;margin-bottom:2rem;}
+    .stat-card{
+      background:var(--card);border:1px solid rgba(200,168,75,.1);
+      border-radius:12px;padding:1.4rem;
+      transition:transform .2s,border-color .2s;
+    }
+    .stat-card:hover{transform:translateY(-3px);border-color:rgba(200,168,75,.25);}
+    .stat-card-label{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;}
+    .stat-card-val{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:700;color:var(--gold);}
+    .stat-card-sub{font-size:.76rem;color:var(--muted);margin-top:.3rem;}
+
+    /* Tabs */
+    .tab-content{display:none;}
+    .tab-content.active{display:block;}
+
+    /* Messages */
+    .messages-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;}
+    .messages-header h3{font-size:1.1rem;font-weight:600;color:var(--cream);}
+    .btn-sm{
+      font-size:.75rem;padding:.45rem 1rem;border-radius:6px;
+      border:1px solid rgba(200,168,75,.3);background:transparent;
+      color:var(--gold);cursor:pointer;transition:background .2s;
+    }
+    .btn-sm:hover{background:rgba(200,168,75,.1);}
+    .btn-danger{border-color:rgba(239,68,68,.3);color:var(--red);}
+    .btn-danger:hover{background:rgba(239,68,68,.1);}
+
+    .msg-list{display:flex;flex-direction:column;gap:.85rem;}
+    .msg-card{
+      background:var(--card);border:1px solid rgba(200,168,75,.08);
+      border-radius:12px;padding:1.3rem;cursor:pointer;
+      transition:border-color .2s,transform .2s;position:relative;
+    }
+    .msg-card:hover{border-color:rgba(200,168,75,.22);transform:translateX(3px);}
+    .msg-card.unread{border-left:3px solid var(--gold);}
+    .msg-card-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;}
+    .msg-name{font-weight:600;font-size:.95rem;color:var(--cream);}
+    .msg-email{font-size:.78rem;color:var(--muted);}
+    .msg-date{font-size:.72rem;color:var(--muted);}
+    .msg-subject{
+      display:inline-block;margin:.5rem 0;
+      font-size:.72rem;padding:.2rem .7rem;
+      background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.2);
+      border-radius:20px;color:var(--gold2);
+    }
+    .msg-body{font-size:.86rem;color:var(--muted);line-height:1.6;margin-top:.4rem;}
+    .unread-dot{
+      position:absolute;top:1rem;right:1rem;
+      width:8px;height:8px;border-radius:50%;background:var(--gold);
+    }
+    .no-msgs{text-align:center;padding:3rem;color:var(--muted);font-size:.9rem;}
+
+    /* Profile tab */
+    .profile-grid{display:grid;grid-template-columns:1fr 2fr;gap:2rem;}
+    .profile-card{background:var(--card);border:1px solid rgba(200,168,75,.1);border-radius:12px;padding:2rem;text-align:center;}
+    .profile-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(145deg,#1c2d4a,#0c1322);border:2px solid rgba(200,168,75,.3);display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto 1rem;}
+    .profile-name{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:var(--white);}
+    .profile-role{font-size:.82rem;color:var(--gold);margin-top:.3rem;}
+    .profile-info{margin-top:1.5rem;display:flex;flex-direction:column;gap:.7rem;}
+    .pinfo-row{display:flex;align-items:center;gap:.8rem;font-size:.84rem;color:var(--muted);}
+    .pinfo-row a{color:var(--muted);text-decoration:none;} .pinfo-row a:hover{color:var(--gold);}
+
+    .profile-details{background:var(--card);border:1px solid rgba(200,168,75,.1);border-radius:12px;padding:2rem;}
+    .pd-section{margin-bottom:2rem;}
+    .pd-section:last-child{margin-bottom:0;}
+    .pd-title{font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid rgba(200,168,75,.1);}
+    .pd-row{display:flex;gap:1rem;margin-bottom:.7rem;font-size:.88rem;}
+    .pd-label{color:var(--muted);min-width:120px;flex-shrink:0;}
+    .pd-val{color:var(--cream);}
+
+    /* Settings tab */
+    .settings-box{background:var(--card);border:1px solid rgba(200,168,75,.1);border-radius:12px;padding:2rem;max-width:500px;}
+    .settings-title{font-size:1rem;font-weight:600;color:var(--cream);margin-bottom:1.5rem;}
+    .settings-fg{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem;}
+    .settings-fg label{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+    .settings-fg input{background:var(--deep);border:1px solid rgba(240,235,224,.08);border-radius:6px;padding:.8rem 1rem;color:var(--cream);font-family:'Outfit',sans-serif;font-size:.9rem;outline:none;transition:border-color .25s;}
+    .settings-fg input:focus{border-color:rgba(200,168,75,.4);}
+    .btn-save{background:var(--gold);color:var(--navy);font-weight:700;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;padding:.75rem 2rem;border:none;border-radius:6px;cursor:pointer;transition:background .2s;}
+    .btn-save:hover{background:var(--gold2);}
+    .settings-success{display:none;margin-top:1rem;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:.75rem;border-radius:8px;font-size:.84rem;}
+
+    @media(max-width:768px){
+      .sidebar{width:100%;position:relative;height:auto;}
+      .main{margin-left:0;}
+      .layout{flex-direction:column;}
+      .stats-row{grid-template-columns:1fr 1fr;}
+      .profile-grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN SCREEN ══════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-avatar">👨‍💼</div>
+    <div class="login-logo">Sandeep Kumar</div>
+    <div class="login-sub">Admin Panel — Secure Login</div>
+
+    <div class="fg">
+      <label>Username / Email</label>
+      <input type="text" id="inp-user" placeholder="Enter username" autocomplete="username"/>
+    </div>
+    <div class="fg">
+      <label>Password</label>
+      <input type="password" id="inp-pass" placeholder="Enter password" autocomplete="current-password"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Login to Admin Panel →</button>
+    <div class="login-error" id="login-err">❌ Incorrect username or password. Please try again.</div>
+    <div class="login-hint">Default: Username <span>sandeep</span> · Password <span>SK@2026</span></div>
+  </div>
+</div>
+
+<!-- ══════════ ADMIN PANEL ══════════ -->
+<div id="admin-panel">
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        Admin Panel
+        <small>Sandeep Kumar Portfolio</small>
+      </div>
+
+      <button class="nav-item active" onclick="showTab('dashboard',this)"><span class="ni">🏠</span>Dashboard</button>
+      <button class="nav-item" onclick="showTab('messages',this)">
+        <span class="ni">📬</span>Messages
+        <span class="badge-count" id="unread-badge">0</span>
+      </button>
+      <button class="nav-item" onclick="showTab('profile',this)"><span class="ni">👤</span>My Profile</button>
+      <button class="nav-item" onclick="showTab('settings',this)"><span class="ni">⚙️</span>Settings</button>
+      <a href="index.html" target="_blank" class="nav-item" style="text-decoration:none;"><span class="ni">🌐</span>View Website</a>
+
+      <div class="sidebar-logout">
+        <button class="nav-item" onclick="doLogout()" style="color:var(--red)"><span class="ni">🚪</span>Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- DASHBOARD TAB -->
+      <div class="tab-content active" id="tab-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Welcome back, Sandeep! 👋</div>
+            <div class="page-time" id="curr-time"></div>
+          </div>
+          <a href="index.html" target="_blank" class="btn-sm">🌐 View Live Website</a>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-card-label">Total Messages</div>
+            <div class="stat-card-val" id="stat-total">0</div>
+            <div class="stat-card-sub">Contact form submissions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Unread</div>
+            <div class="stat-card-val" id="stat-unread">0</div>
+            <div class="stat-card-sub">New messages</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Experience</div>
+            <div class="stat-card-val">2+</div>
+            <div class="stat-card-sub">Years in Marketing</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Qualification</div>
+            <div class="stat-card-val">M.Com</div>
+            <div class="stat-card-sub">Master of Commerce</div>
+          </div>
+        </div>
+
+        <!-- Recent messages preview -->
+        <div style="background:var(--card);border:1px solid rgba(200,168,75,.1);border-radius:12px;padding:1.5rem;">
+          <div style="font-size:1rem;font-weight:600;color:var(--cream);margin-bottom:1.2rem;">📬 Recent Messages</div>
+          <div id="dash-msgs"><div class="no-msgs">No messages yet. When visitors contact you, they'll appear here.</div></div>
+        </div>
+      </div>
+
+      <!-- MESSAGES TAB -->
+      <div class="tab-content" id="tab-messages">
+        <div class="page-header">
+          <div class="page-title">Messages 📬</div>
+          <button class="btn-sm btn-danger" onclick="clearAllMessages()">🗑️ Clear All</button>
+        </div>
+        <div class="messages-header">
+          <h3 id="msg-count-label">All Messages</h3>
+          <button class="btn-sm" onclick="markAllRead()">✅ Mark All Read</button>
+        </div>
+        <div class="msg-list" id="msg-list">
+          <div class="no-msgs">No messages yet.</div>
+        </div>
+      </div>
+
+      <!-- PROFILE TAB -->
+      <div class="tab-content" id="tab-profile">
+        <div class="page-header"><div class="page-title">My Profile 👤</div></div>
+        <div class="profile-grid">
+          <div class="profile-card">
+            <div class="profile-avatar">👨‍💼</div>
+            <div class="profile-name">Sandeep Kumar</div>
+            <div class="profile-role">Marketing Professional &amp; Data Strategist</div>
+            <div class="profile-info">
+              <div class="pinfo-row">📧 <a href="mailto:skg9519@gmail.com">skg9519@gmail.com</a></div>
+              <div class="pinfo-row">📞 <a href="tel:+919415591008">+91 9415591008</a></div>
+              <div class="pinfo-row">📍 Maharajganj, India</div>
+              <div class="pinfo-row">🔗 <a href="https://www.linkedin.com/in/sandeep-kumar-b7a09435b" target="_blank">LinkedIn Profile</a></div>
+            </div>
+          </div>
+          <div class="profile-details">
+            <div class="pd-section">
+              <div class="pd-title">Personal Information</div>
+              <div class="pd-row"><span class="pd-label">Full Name</span><span class="pd-val">Sandeep Kumar</span></div>
+              <div class="pd-row"><span class="pd-label">Date of Birth</span><span class="pd-val">10 January 1999</span></div>
+              <div class="pd-row"><span class="pd-label">Nationality</span><span class="pd-val">Indian 🇮🇳</span></div>
+              <div class="pd-row"><span class="pd-label">Passport</span><span class="pd-val">V369935</span></div>
+              <div class="pd-row"><span class="pd-label">Address</span><span class="pd-val">Belbharia, Maharajganj — 273303</span></div>
+            </div>
+            <div class="pd-section">
+              <div class="pd-title">Education</div>
+              <div class="pd-row"><span class="pd-label">M.Com</span><span class="pd-val">Sidharth University, 2019–2021</span></div>
+              <div class="pd-row"><span class="pd-label">B.Com</span><span class="pd-val">Sidharth University, 2016–2019</span></div>
+            </div>
+            <div class="pd-section">
+              <div class="pd-title">Work Experience</div>
+              <div class="pd-row"><span class="pd-label">Role</span><span class="pd-val">Production Supervisor</span></div>
+              <div class="pd-row"><span class="pd-label">Company</span><span class="pd-val">Satnam Engineering, Ludhiana</span></div>
+              <div class="pd-row"><span class="pd-label">Duration</span><span class="pd-val">Aug 2022 — Oct 2024</span></div>
+            </div>
+            <div class="pd-section">
+              <div class="pd-title">Skills</div>
+              <div class="pd-row"><span class="pd-label">Tools</span><span class="pd-val">MS Excel, Tally Prime, MS Office</span></div>
+              <div class="pd-row"><span class="pd-label">Expertise</span><span class="pd-val">Market Analysis, Digital Marketing, GST</span></div>
+              <div class="pd-row"><span class="pd-label">Languages</span><span class="pd-val">Hindi (Native), English</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div class="tab-content" id="tab-settings">
+        <div class="page-header"><div class="page-title">Settings ⚙️</div></div>
+        <div class="settings-box">
+          <div class="settings-title">🔐 Change Password</div>
+          <div class="settings-fg"><label>New Username</label><input type="text" id="new-user" placeholder="Enter new username"/></div>
+          <div class="settings-fg"><label>New Password</label><input type="password" id="new-pass" placeholder="Enter new password"/></div>
+          <div class="settings-fg"><label>Confirm Password</label><input type="password" id="confirm-pass" placeholder="Confirm new password"/></div>
+          <button class="btn-save" onclick="saveSettings()">Save Changes</button>
+          <div class="settings-success" id="settings-ok">✅ Credentials updated successfully!</div>
+        </div>
+        <br/>
+        <div class="settings-box" style="margin-top:1rem;">
+          <div class="settings-title">🗑️ Data Management</div>
+          <p style="font-size:.86rem;color:var(--muted);margin-bottom:1.2rem;">Clear all contact form messages from storage.</p>
+          <button class="btn-sm btn-danger" onclick="clearAllMessages()">Clear All Messages</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  // ── CREDENTIALS (stored in localStorage so admin can change them) ──
+  function getCreds() {
+    return {
+      user: localStorage.getItem('sk_admin_user') || 'sandeep',
+      pass: localStorage.getItem('sk_admin_pass') || 'SK@2026'
+    };
+  }
+
+  // ── LOGIN ──
+  function doLogin() {
+    const u = document.getElementById('inp-user').value.trim();
+    const p = document.getElementById('inp-pass').value;
+    const c = getCreds();
+    if (u === c.user && p === c.pass) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      updateTime();
+      loadMessages();
+      setInterval(updateTime, 1000);
+    } else {
+      document.getElementById('login-err').style.display = 'block';
+      setTimeout(() => document.getElementById('login-err').style.display = 'none', 3000);
+    }
+  }
+
+  // Enter key for login
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+  });
+
+  // ── LOGOUT ──
+  function doLogout() {
+    document.getElementById('admin-panel').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('inp-user').value = '';
+    document.getElementById('inp-pass').value = '';
+  }
+
+  // ── TABS ──
+  function showTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'messages') loadMessages();
+    if (name === 'dashboard') loadDashboard();
+  }
+
+  // ── TIME ──
+  function updateTime() {
+    const el = document.getElementById('curr-time');
+    if (el) el.textContent = new Date().toLocaleString('hi-IN', {weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  }
+
+  // ── MESSAGES ──
+  function loadMessages() {
+    const msgs = JSON.parse(localStorage.getItem('sk_messages') || '[]');
+    const unread = msgs.filter(m => !m.read).length;
+
+    // Update badges
+    document.getElementById('unread-badge').textContent = unread;
+    document.getElementById('stat-total').textContent = msgs.length;
+    document.getElementById('stat-unread').textContent = unread;
+    document.getElementById('msg-count-label').textContent = `All Messages (${msgs.length})`;
+
+    // Messages tab
+    const list = document.getElementById('msg-list');
+    if (msgs.length === 0) {
+      list.innerHTML = '<div class="no-msgs">📭 No messages yet. When visitors contact you from the website, they\'ll appear here.</div>';
+    } else {
+      list.innerHTML = msgs.map(m => `
+        <div class="msg-card ${m.read ? '' : 'unread'}" onclick="markRead(${m.id})">
+          ${!m.read ? '<div class="unread-dot"></div>' : ''}
+          <div class="msg-card-top">
+            <div><div class="msg-name">${m.name}</div><div class="msg-email">${m.email}</div></div>
+            <div class="msg-date">${m.date}</div>
+          </div>
+          <span class="msg-subject">${m.subject}</span>
+          <div class="msg-body">${m.message}</div>
+        </div>
+      `).join('');
+    }
+
+    loadDashboard(msgs);
+  }
+
+  function loadDashboard(msgs) {
+    msgs = msgs || JSON.parse(localStorage.getItem('sk_messages') || '[]');
+    const recent = msgs.slice(0, 3);
+    const el = document.getElementById('dash-msgs');
+    if (recent.length === 0) {
+      el.innerHTML = '<div class="no-msgs">No messages yet.</div>';
+    } else {
+      el.innerHTML = recent.map(m => `
+        <div style="padding:.9rem;border-bottom:1px solid rgba(255,255,255,.04);display:flex;justify-content:space-between;align-items:center;gap:1rem;">
+          <div>
+            <div style="font-size:.9rem;font-weight:500;color:var(--cream);">${m.name} <span style="font-size:.75rem;color:var(--gold);margin-left:.4rem;">${m.subject}</span></div>
+            <div style="font-size:.8rem;color:var(--muted);margin-top:.2rem;">${m.message.substring(0,80)}${m.message.length > 80 ? '...' : ''}</div>
+          </div>
+          <div style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${m.date}</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  function markRead(id) {
+    const msgs = JSON.parse(localStorage.getItem('sk_messages') || '[]');
+    const idx = msgs.findIndex(m => m.id === id);
+    if (idx !== -1) { msgs[idx].read = true; localStorage.setItem('sk_messages', JSON.stringify(msgs)); loadMessages(); }
+  }
+
+  function markAllRead() {
+    const msgs = JSON.parse(localStorage.getItem('sk_messages') || '[]');
+    msgs.forEach(m => m.read = true);
+    localStorage.setItem('sk_messages', JSON.stringify(msgs));
+    loadMessages();
+  }
+
+  function clearAllMessages() {
+    if (confirm('सभी messages delete करें?')) {
+      localStorage.removeItem('sk_messages');
+      loadMessages();
+    }
+  }
+
+  // ── SETTINGS ──
+  function saveSettings() {
+    const u = document.getElementById('new-user').value.trim();
+    const p = document.getElementById('new-pass').value;
+    const c = document.getElementById('confirm-pass').value;
+    if (!u || !p) return alert('Username और password दोनों भरें।');
+    if (p !== c) return alert('Passwords match नहीं हो रहे।');
+    localStorage.setItem('sk_admin_user', u);
+    localStorage.setItem('sk_admin_pass', p);
+    document.getElementById('settings-ok').style.display = 'block';
+    setTimeout(() => document.getElementById('settings-ok').style.display = 'none', 3000);
+    document.getElementById('new-user').value = '';
+    document.getElementById('new-pass').value = '';
+    document.getElementById('confirm-pass').value = '';
+  }
+
+  // Init time
+  updateTime();
+</script>
+</body>
+</html>
